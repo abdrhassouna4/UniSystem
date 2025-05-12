@@ -4,7 +4,8 @@ public class Student extends User {
     private String studentId;
     private String admissionDate;
     private String academicStatus;
-    private List<Course> enrolledCourses;  // Now we store the list of courses directly
+    private List<Course> enrolledCourses;
+    private List<Course> completedCourses;  // New list to track completed courses
 
     // Constructor to initialize student with common properties
     public Student(String username, String password, String name, String email, String contactInfo,
@@ -14,6 +15,7 @@ public class Student extends User {
         this.admissionDate = admissionDate;
         this.academicStatus = academicStatus;
         this.enrolledCourses = new ArrayList<>();
+        this.completedCourses = new ArrayList<>();
     }
 
     // Getter methods
@@ -33,6 +35,10 @@ public class Student extends User {
         return enrolledCourses;
     }
 
+    public List<Course> getCompletedCourses() {
+        return completedCourses;
+    }
+
     // Register a course if there are available seats
     public void registerForCourse(Course course) {
         if (course.getAvailableSeats() > 0) {
@@ -46,9 +52,24 @@ public class Student extends User {
 
     // Drop a course
     public void dropCourse(Course course) {
-        enrolledCourses.remove(course);
-        course.removeStudent(this);  // Remove the student from the course
-        System.out.println("Dropped course: " + course.getTitle());
+        if (enrolledCourses.contains(course)) {
+            enrolledCourses.remove(course);
+            course.removeStudent(this);
+            System.out.println("Dropped course: " + course.getTitle());
+        } else {
+            System.out.println("You are not enrolled in this course.");
+        }
+    }
+
+    // Mark a course as completed
+    public void completeCourse(Course course) {
+        if (enrolledCourses.contains(course)) {
+            enrolledCourses.remove(course);
+            completedCourses.add(course);
+            System.out.println("Course " + course.getTitle() + " marked as completed.");
+        } else {
+            System.out.println("Cannot complete a course you are not enrolled in.");
+        }
     }
 
     // View grades for all enrolled courses
@@ -56,26 +77,24 @@ public class Student extends User {
         if (enrolledCourses.isEmpty()) {
             System.out.println("You are not enrolled in any courses.");
         } else {
-            // This can be extended if grades are stored in an Enrollment object
             for (Course c : enrolledCourses) {
                 System.out.println("Course: " + c.getTitle() + ", Grade: Not yet assigned.");
             }
         }
     }
 
-    // Calculate GPA based on grades and course credits
+    // Calculate GPA based on dummy grade points and course credits
     public double calculateGPA() {
-        if (enrolledCourses.isEmpty()) {
-            System.out.println("No courses enrolled.");
+        if (completedCourses.isEmpty()) {
+            System.out.println("No completed courses.");
             return 0;
         }
 
         double totalPoints = 0;
         int totalCredits = 0;
 
-        for (Course c : enrolledCourses) {
-            // Dummy grade points for now. You can replace this with actual grade points logic.
-            double gradePoints = 4.0;  // Assuming a GPA scale of A = 4.0
+        for (Course c : completedCourses) {
+            double gradePoints = 4.0;  // Dummy value (e.g., assume all A's for now)
             int credits = c.getCreditHours();
             totalPoints += gradePoints * credits;
             totalCredits += credits;
@@ -85,7 +104,12 @@ public class Student extends User {
             return 0;
         }
 
-        return totalPoints / totalCredits;  // GPA = Total Grade Points / Total Credits
+        return totalPoints / totalCredits;
+    }
+
+    // Check if a course has been completed
+    public boolean hasCompletedCourse(Course course) {
+        return completedCourses.contains(course);
     }
 
     @Override
