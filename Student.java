@@ -1,128 +1,161 @@
+import java.io.*;
 import java.util.*;
-
-public class Student extends User {
+import java.util.regex.*;
+// Student class
+class Student extends User {
     private String studentId;
     private String admissionDate;
     private String academicStatus;
-    private List<Course> enrolledCourses;
-    private List<Course> completedCourses;  // New list to track completed courses
+    private Enrollment[] enrolledCourses; 
+    private int enrolledCourseCount;
 
-    // Constructor to initialize student with common properties
-    public Student(String username, String password, String name, String email, String contactInfo,
+    public Student(String userId, String username, String password, String name, String email, String contactInfo,
                    String studentId, String admissionDate, String academicStatus) {
-        super(username, password, name, email, contactInfo);
+        super(userId, username, password, name, email, contactInfo);
         this.studentId = studentId;
         this.admissionDate = admissionDate;
         this.academicStatus = academicStatus;
-        this.enrolledCourses = new ArrayList<>();
-        this.completedCourses = new ArrayList<>();
+        this.enrolledCourses = new Enrollment[8]; 
+        this.enrolledCourseCount = 0;
     }
 
-    // Getter methods
+    public void registerForCourse(Course course) {
+        if (enrolledCourseCount >= 8) {
+            System.out.println("Maximum courses reached.");
+            return;
+        }
+
+        if (course.getAvailableSeats() > 0) {
+            if (course.isPrerequisiteSatisfied(this)) {
+                Enrollment enrollment = new Enrollment(this, course);
+                enrolledCourses[enrolledCourseCount++] = enrollment;
+                course.addStudent(this);
+                System.out.println("Course registered successfully.");
+            } else {
+                System.out.println("Prerequisites not satisfied.");
+            }
+        } else {
+            System.out.println("No available seats.");
+        }
+    }
+
     public String getStudentId() {
         return studentId;
     }
 
-    public String getAdmissionDate() {
-        return admissionDate;
-    }
-
-    public String getAcademicStatus() {
-        return academicStatus;
-    }
-
-    public List<Course> getEnrolledCourses() {
-        return enrolledCourses;
-    }
-
-    public List<Course> getCompletedCourses() {
-        return completedCourses;
-    }
-
-    // Register a course if there are available seats
-    public void registerForCourse(Course course) {
-        if (course.getAvailableSeats() > 0) {
-            enrolledCourses.add(course);
-            course.addStudent(this);  // Enroll the student in the course
-            System.out.println("Registered for course: " + course.getTitle());
-        } else {
-            System.out.println("Course is full.");
-        }
-    }
-
-    // Drop a course
     public void dropCourse(Course course) {
-        if (enrolledCourses.contains(course)) {
-            enrolledCourses.remove(course);
-            course.removeStudent(this);
-            System.out.println("Dropped course: " + course.getTitle());
-        } else {
+        boolean found = false;
+        for (int i = 0; i < enrolledCourseCount; i++) {
+            if (enrolledCourses[i].getCourse().equals(course)) {
+                // Shift remaining elements
+                for (int j = i; j < enrolledCourseCount - 1; j++) {
+                    enrolledCourses[j] = enrolledCourses[j + 1];
+                }
+                enrolledCourses[--enrolledCourseCount] = null;
+                course.removeStudent(this.getStudentId());
+                System.out.println("Course dropped successfully.");
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
             System.out.println("You are not enrolled in this course.");
         }
     }
 
-    // Mark a course as completed
-    public void completeCourse(Course course) {
-        if (enrolledCourses.contains(course)) {
-            enrolledCourses.remove(course);
-            completedCourses.add(course);
-            System.out.println("Course " + course.getTitle() + " marked as completed.");
-        } else {
-            System.out.println("Cannot complete a course you are not enrolled in.");
-        }
-    }
-
-    // View grades for all enrolled courses
     public void viewGrades() {
-        if (enrolledCourses.isEmpty()) {
-            System.out.println("You are not enrolled in any courses.");
-        } else {
-            for (Course c : enrolledCourses) {
-                System.out.println("Course: " + c.getTitle() + ", Grade: Not yet assigned.");
-            }
+        System.out.println("\n=== Your Grades ===");
+        for (int i = 0; i < enrolledCourseCount; i++) {
+            Enrollment e = enrolledCourses[i];
+            System.out.println("Course: " + e.getCourse().getTitle()
+                    + ", Grade: " + (e.getGrade() != null ? e.getGrade() : "Not graded yet"));
         }
     }
 
-    // Calculate GPA based on dummy grade points and course credits
     public double calculateGPA() {
-        if (completedCourses.isEmpty()) {
-            System.out.println("No completed courses.");
-            return 0;
-        }
-
         double totalPoints = 0;
         int totalCredits = 0;
-
-        for (Course c : completedCourses) {
-            double gradePoints = 4.0;  // Dummy value (e.g., assume all A's for now)
-            int credits = c.getCreditHours();
-            totalPoints += gradePoints * credits;
-            totalCredits += credits;
+        for (int i = 0; i < enrolledCourseCount; i++) {
+            Enrollment e = enrolledCourses[i];
+            if (e.getGrade() != null) {
+                totalPoints += e.getGradePoint() * e.getCourse().getCreditHours();
+                totalCredits += e.getCourse().getCreditHours();
+            }
         }
-
-        if (totalCredits == 0) {
-            return 0;
-        }
-
-        return totalPoints / totalCredits;
+        return totalCredits > 0 ? totalPoints / totalCredits : 0.0;
     }
 
-    // Check if a course has been completed
-    public boolean hasCompletedCourse(Course course) {
-        return completedCourses.contains(course);
+    public Enrollment[] getEnrolledCourses() {
+        return enrolledCourses;
+    }
+
+    public int getCourseCount() {
+        return enrolledCourseCount;
     }
 
     @Override
-    public void showMenu() {
-        System.out.println("Welcome, Student: " + name);
-        System.out.println("1. Register for a Course");
-        System.out.println("2. Drop a Course");
-        System.out.println("3. View Grades");
-        System.out.println("4. Calculate GPA");
-        System.out.println("5. Logout");
-    }
+    public void displayMenu() {
+        Scanner scanner = new Scanner(System.in);
+        boolean continueMenu = true;
 
-    public String getName() {
-        return name;
+        while (continueMenu) {
+            System.out.println("\n========== Student Menu ==========");
+            System.out.println("1. Register for Course");
+            System.out.println("2. Drop Course");
+            System.out.println("3. View Grades");
+            System.out.println("4. View GPA");
+            System.out.println("5. Update Profile");
+            System.out.println("6. Logout");
+            System.out.print("Enter your choice (1-6): ");
+            
+            try {
+                int choice = scanner.nextInt();
+                scanner.nextLine(); // consume newline
+
+                switch (choice) {
+                    case 1:
+                        System.out.println("\nRegistering for a course...");
+                        // Implementation would go here
+                        break;
+                    case 2:
+                        System.out.println("\nDropping a course...");
+                        // Implementation would go here
+                        break;
+                    case 3:
+                        viewGrades();
+                        break;
+                    case 4:
+                        System.out.printf("\nYour GPA: %.2f\n", calculateGPA());
+                        break;
+                    case 5:
+                        System.out.println("\nUpdate Profile:");
+                        System.out.print("Enter new name: ");
+                        String name = scanner.nextLine();
+                        System.out.print("Enter new email: ");
+                        String email = scanner.nextLine();
+                        System.out.print("Enter new contact info: ");
+                        String contact = scanner.nextLine();
+                        updateProfile(name, email, contact);
+                        break;
+                    case 6:
+                        continueMenu = false;
+                        System.out.println("Logging out...");
+                        break;
+                    default:
+                        System.out.println("Invalid choice. Please enter 1-6.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Please enter a number between 1-6.");
+                scanner.nextLine(); // clear invalid input
+            }
+
+            if (continueMenu) {
+                System.out.print("\nReturn to menu? (yes/no): ");
+                String cont = scanner.nextLine();
+                if (!cont.equalsIgnoreCase("yes")) {
+                    continueMenu = false;
+                }
+            }
+        }
     }
 }
