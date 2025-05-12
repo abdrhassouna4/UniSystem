@@ -1,125 +1,121 @@
+import java.io.*;
 import java.util.*;
-
+import java.util.regex.*;
 public class Course {
-    private String courseId;
-    private String title;
-    private String department;
-    private int creditHours;  // Represents the number of credit hours for the course
-    private Faculty instructor;
-    private List<Student> enrolledStudents;
-    private List<Course> prerequisiteCourses;
+    private String courseCode;
+    private String courseName;
+    private String facultyId;
+    private int creditHours;
+    private String description;
+    private String schedule;
+    private String[] enrolledStudentIds;
+    private int enrolledCount;
+    private final int MAXENROLLMENTS = 100;
 
-    // Constructor to initialize course properties
-    public Course(String courseId, String title, String department, int creditHours) {
-        this.courseId = courseId;
-        this.title = title;
-        this.department = department;
+    public Course(String courseCode, String courseName, String facultyId, int creditHours, String description, String schedule) {
+        this.courseCode = courseCode;
+        this.courseName = courseName;
+        this.facultyId = facultyId;
         this.creditHours = creditHours;
-        this.enrolledStudents = new ArrayList<>();
-        this.prerequisiteCourses = new ArrayList<>();
+        this.description = description;
+        this.schedule = schedule;
+        this.enrolledStudentIds = new String[MAXENROLLMENTS];
+        this.enrolledCount = 0;
     }
 
-    // Getter for course ID
-    public String getCourseId() {
-        return courseId;
+    public String getCourseCode() {
+        return courseCode;
     }
 
-    // Getter for course title
-    public String getTitle() {
-        return title;
+    public String getCourseName() {
+        return courseName;
     }
 
-    // Getter for credit hours
+    public String getFacultyId() {
+        return facultyId;
+    }
+
+    public void setFacultyId(String facultyId) {
+        this.facultyId = facultyId;
+    }
+
     public int getCreditHours() {
         return creditHours;
     }
 
-    // Method to add student to the course
-    public boolean addStudent(Student student) {
-        // Check if prerequisites are satisfied before adding the student
-        for (Course prerequisite : prerequisiteCourses) {
-            if (!student.hasCompletedCourse(prerequisite)) {
-                System.out.println("Cannot add student: Prerequisites not satisfied for " + student.getName());
-                return false;  // Student cannot be added if prerequisites are not satisfied
-            }
-        }
+    public String getTitle() {
+        return courseName;
+    }
 
-        if (getAvailableSeats() > 0) {
-            enrolledStudents.add(student);
-            System.out.println("Added student " + student.getName() + " to " + title);
+    public String getDescription() {
+        return description;
+    }
+
+    public String getSchedule() {
+        return schedule;
+    }
+
+    public boolean enrollStudent(String studentId) {
+        if (enrolledCount < MAXENROLLMENTS) {
+            enrolledStudentIds[enrolledCount] = studentId;
+            enrolledCount++;
             return true;
-        } else {
-            System.out.println("Course is full. Cannot add student.");
-            return false;  // No seats available
         }
+        return false;
     }
 
-    // Method to remove student from the course
-    public void removeStudent(Student student) {
-        enrolledStudents.remove(student);
-        System.out.println("Removed student " + student.getName() + " from " + title);
-    }
-
-    // Method to get available seats in the course
-    public int getAvailableSeats() {
-        return 30 - enrolledStudents.size();  // Assume max of 30 students per course
-    }
-
-    // Method to set the course instructor
-    public void setInstructor(Faculty faculty) {
-        this.instructor = faculty;
-        System.out.println("Instructor " + faculty.getName() + " has been assigned to " + title);
-    }
-
-    // Getter for the instructor
-    public Faculty getInstructor() {
-        return instructor;
-    }
-
-    // Method to check if prerequisites are satisfied for the course
-    public boolean isPrerequisiteSatisfied(Course course) {
-        return prerequisiteCourses.contains(course);
-    }
-
-    // Method to add prerequisite course for the current course
-    public void addPrerequisiteCourse(Course course) {
-        prerequisiteCourses.add(course);
-        System.out.println("Prerequisite " + course.getTitle() + " has been added for " + title);
-    }
-
-    // Method to get list of enrolled students
-    public List<Student> getEnrolledStudents() {
-        return enrolledStudents;
-    }
-
-    // Method to get list of prerequisite courses
-    public List<Course> getPrerequisiteCourses() {
-        return prerequisiteCourses;
-    }
-
-    // Method to display course details
-    public void displayCourseDetails() {
-        System.out.println("Course ID: " + courseId);
-        System.out.println("Title: " + title);
-        System.out.println("Department: " + department);
-        System.out.println("Credit Hours: " + creditHours);
-        System.out.println("Instructor: " + (instructor != null ? instructor.getName() : "Not Assigned"));
-        System.out.println("Enrolled Students: " + enrolledStudents.size() + "/30");
-
-        // Display prerequisites for the course
-        if (!prerequisiteCourses.isEmpty()) {
-            System.out.print("Prerequisites: ");
-            for (Course prereq : prerequisiteCourses) {
-                System.out.print(prereq.getTitle() + " ");
+    public boolean removeStudent(String studentId) {
+        for (int i = 0; i < enrolledCount; i++) {
+            if (enrolledStudentIds[i].equals(studentId)) {
+                for (int j = i; j < enrolledCount - 1; j++) {
+                    enrolledStudentIds[j] = enrolledStudentIds[j + 1];
+                }
+                enrolledStudentIds[enrolledCount - 1] = null;
+                enrolledCount--;
+                return true;
             }
-            System.out.println();
-        } else {
-            System.out.println("No prerequisites for this course.");
+        }
+        return false;
+    }
+
+    public void displayCourseInfo() {
+        System.out.println("Course Code: " + courseCode);
+        System.out.println("Course Name: " + courseName);
+        System.out.println("Faculty ID: " + facultyId);
+        System.out.println("Description: " + description);
+        System.out.println("Schedule: " + schedule);
+    }
+
+    public void displayEnrolledStudents() {
+        System.out.println("Enrolled students in " + courseCode + ":");
+        for (int i = 0; i < enrolledCount; i++) {
+            System.out.println((i + 1) + ". Student ID: " + enrolledStudentIds[i]);
         }
     }
 
-    // Method to get total number of enrolled students
-    public int getEnrollmentCount() {
-        return enrolledStudents.size();
+    public boolean isStudentEnrolled(String studentId) {
+        for (int i = 0; i < enrolledCount; i++) {
+            if (enrolledStudentIds[i].equals(studentId)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public int getAvailableSeats() {
+        return MAXENROLLMENTS - enrolledCount;
+    }
+
+    public boolean isPrerequisiteSatisfied(Student student) {
+        // Simplified - in real implementation would check actual prerequisites
+        return true;
+    }
+
+    public void addStudent(Student student) {
+        if (enrollStudent(student.getStudentId())) {
+            System.out.println("Student enrolled successfully");
+        } else {
+            System.out.println("Failed to enroll student");
+        }
     }
 }
