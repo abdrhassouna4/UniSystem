@@ -1,69 +1,47 @@
-import java.util.Date;
-
 public class Enrollment {
     private Student student;
     private Course course;
-    private Date enrollmentDate;
-    private String status;  // "In Progress", "Completed", etc.
-    private String grade;   // Grade assigned to the student
+    private Double grade;
+    private String enrollmentDate;
+    private String status; // "Enrolled", "Withdrawn", "Completed"
 
-    // Constructor for the enrollment
-    public Enrollment(Student student, Course course, Date enrollmentDate, String status) {
+    public Enrollment(Student student, Course course) {
         this.student = student;
         this.course = course;
-        this.enrollmentDate = enrollmentDate;
-        this.status = status;
-        this.grade = null;  // Initially no grade is assigned
+        this.enrollmentDate = java.time.LocalDate.now().toString();
+        this.grade = null;
+        this.status = "Enrolled";
     }
 
-    // ✅ Method to assign a grade to the student for this course
-    public void assignGrade(String grade) {
-        this.grade = grade;
-        this.status = "Completed";  // Once grade is assigned, the course is marked as completed
-        System.out.println("Grade " + grade + " assigned to student " + student.getName() + " for course " + course.getTitle());
+    public Course getCourse() { return course; }
+    public Double getGrade() { return grade; }
+    public void setGrade(double g) {
+        grade = g;
+        status = "Completed";
     }
 
-    // ✅ Method to get the status of the enrollment
-    public String getStatus() {
-        return status;
-    }
+    public boolean passed() { return grade != null && grade >= 50.0; }
 
-    // ✅ Method to withdraw from the course
-    public void withdraw() {
-        this.status = "Withdrawn";
-        System.out.println("Student " + student.getName() + " has withdrawn from course: " + course.getTitle());
-    }
-
-    // Getter method for grade
-    public String getGrade() {
-        return grade;
-    }
-
-    // Getter method for student
-    public Student getStudent() {
-        return student;
-    }
-
-    // Getter method for course
-    public Course getCourse() {
-        return course;
-    }
-
-    // Method to get the grade point (assuming a grading scale exists)
     public double getGradePoint() {
-        switch (grade) {
-            case "A":
-                return 4.0;
-            case "B":
-                return 3.0;
-            case "C":
-                return 2.0;
-            case "D":
-                return 1.0;
-            case "F":
-                return 0.0;
-            default:
-                return 0.0;  // If no grade is assigned, return 0.0
-        }
+        if (grade == null) return 0.0;
+        if (grade >= 90) return 4.0;
+        else if (grade >= 85) return 3.666;
+        else if (grade >= 80) return 3.333;
+        else if (grade >= 75) return 3.111;
+        else if (grade >= 70) return 2.99;
+        else if (grade >= 65) return 2.66;
+        else if (grade >= 60) return 2.333;
+        else if (grade >= 55) return 2.11;
+        else if (grade >= 50) return 2.0;
+        else return 0.0;
     }
+
+    public String getStatus() { return status; }
+
+    public void withdraw() {
+        status = "Withdrawn";
+        grade = null;
+    }
+
+    public String getEnrollmentDate() { return enrollmentDate; }
 }
