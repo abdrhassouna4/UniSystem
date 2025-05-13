@@ -1,73 +1,60 @@
-import java.io.*;
 import java.util.*;
-import java.util.regex.*;
+
 public class AdminStaff extends User {
-    private String staffId, department, role;
-    public AdminStaff(String u, String un, String p, String n, String e, String c, String id, String dept, String role) {
-        super(u, un, p, n, e, c);
-        this.staffId = id;
-        this.department = dept;
+    private String role;  // Role field for AdminStaff
+
+    public AdminStaff(String userId, String username, String password, String name, String email, String contactInfo) {
+        super(userId, username, password, name, email, contactInfo);
+        this.role = "Admin"; // Default role
+    }
+
+    // Getter and Setter for Role
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
         this.role = role;
     }
 
-    @Override
-    public void displayMenu() {
-        Scanner scanner = new Scanner(System.in);
-        boolean continueMenu = true;
+    // Register a student
+    public Student registerStudent(String studentId, String username, String password, String name, String email,
+                                   String contact, String admissionDate, String academicStatus) {
+        return new Student(studentId, username, password, name, email, contact, studentId, admissionDate, academicStatus);
+    }
 
-        while (continueMenu) {
-            System.out.println("\n========== Admin Staff Menu ==========");
-            System.out.println("1. View Department Info");
-            System.out.println("2. Assign Student to Department");
-            System.out.println("3. Update Profile");
-            System.out.println("4. Logout");
+    // Create a new course
+    public Course createCourse(String courseId, String courseName, String description, int creditHours, int capacity) {
+        return new Course(courseId, courseName, description, creditHours, capacity);
+    }
 
-            System.out.print("Enter your choice (1-4): ");
-            
-            try {
-                int choice = scanner.nextInt();
-                scanner.nextLine(); // consume newline
-
-                switch (choice) {
-                    case 1:
-                        System.out.println("\nDepartment Information:");
-                        System.out.println("Department: " + department);
-                        System.out.println("Role: " + role);
-                        break;
-                    case 2:
-                        System.out.print("\nEnter student ID to assign: ");
-                        String studentId = scanner.nextLine();
-                        System.out.println("Student " + studentId + " assigned to " + department);
-                        break;
-                    case 3:
-                        System.out.println("\nUpdate Profile:");
-                        System.out.print("Enter new name: ");
-                        String name = scanner.nextLine();
-                        System.out.print("Enter new email: ");
-                        String email = scanner.nextLine();
-                        System.out.print("Enter new contact info: ");
-                        String contact = scanner.nextLine();
-                        updateProfile(name, email, contact);
-                        break;
-                    case 4:
-                        continueMenu = false;
-                        System.out.println("Logging out...");
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please enter 1-4.");
-                }
-            } catch (InputMismatchException e) {
-                System.out.println("Please enter a number between 1-4.");
-                scanner.nextLine(); // clear invalid input
-            }
-
-            if (continueMenu) {
-                System.out.print("\nReturn to menu? (yes/no): ");
-                String cont = scanner.nextLine();
-                if (!cont.equalsIgnoreCase("yes")) {
-                    continueMenu = false;
-                }
-            }
+    // Assign a faculty member to a course
+    public void assignFacultyToCourse(Faculty faculty, Course course) {
+        // Ensure that the faculty can be assigned to the course
+        if (faculty != null && course != null) {
+            // Logic to assign faculty to the course
+            System.out.println(faculty.getName() + " has been assigned to " + course.getCourseName());
+        } else {
+            System.out.println("Invalid faculty or course.");
         }
+    }
+
+
+    @Override
+    public boolean login(String username, String password) {
+        return this.username.equals(username) && this.password.equals(password);
+    }
+
+    @Override
+    public void logout() {
+        System.out.println("Admin staff logged out.");
+    }
+
+    @Override
+    public void updateProfile(String name, String email, String contactInfo) {
+        this.name = name;
+        this.email = email;
+        this.contactInfo = contactInfo;
+        System.out.println("Admin profile updated.");
     }
 }

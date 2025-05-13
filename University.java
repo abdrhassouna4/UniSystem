@@ -1,47 +1,57 @@
-public class University {
-    private Department[] departments;
-    private User[] users;
-    private Course[] courses;
+import java.util.*;
+
+class University {
+    private List<Department> departments;
+    private List<User> users;
+    private Map<String, Course> coursesMap;  // Using Map to store courses by course ID
     private String academicCalendar;
 
-    private int departmentCount;
-    private int userCount;
-    private int courseCount;
-
     public University() {
-        this.departments = new Department[50]; // Initial capacity for departments
-        this.users = new User[200];            // Initial capacity for users
-        this.courses = new Course[200];        // Initial capacity for courses
-        this.departmentCount = 0;
-        this.userCount = 0;
-        this.courseCount = 0;
-        this.academicCalendar = "";
+        this.departments = new ArrayList<>();
+        this.users = new ArrayList<>();
+        this.coursesMap = new HashMap<>();  // Initializing coursesMap
     }
 
     public void registerStudent(Student student) {
-        if (userCount < users.length) {
-            users[userCount++] = student;
-            System.out.println("Student registered.");
-        } else {
-            System.out.println("Cannot register more users.");
-        }
+        users.add(student);
+        System.out.println("Student registered successfully.");
     }
 
-    public void hireFaculty(Instructor instructor) {
-        if (userCount < users.length) {
-            users[userCount++] = instructor;
-            System.out.println("Faculty hired.");
-        } else {
-            System.out.println("Cannot hire more users.");
-        }
+    public void hireFaculty(Faculty faculty) {
+        users.add(faculty);
+        System.out.println("Faculty hired successfully.");
     }
 
     public void createDepartment(Department department) {
-        if (departmentCount < departments.length) {
-            departments[departmentCount++] = department;
-            System.out.println("Department created.");
+        departments.add(department);
+        System.out.println("Department created successfully.");
+    }
+
+    // Offer a course by adding it to the coursesMap
+    public void offerCourse(Course course) {
+        coursesMap.put(course.getCourseId(), course);
+        System.out.println("Course offered successfully.");
+    }
+
+    // Print all courses available
+    public void printAllCourses() {
+        if (coursesMap.isEmpty()) {
+            System.out.println("No courses are available.");
         } else {
-            System.out.println("Cannot add more departments.");
+            System.out.println("Available Courses:");
+            for (Course course : coursesMap.values()) {
+                System.out.println("- " + course.getCourseName());
+            }
         }
+    }
+
+    // Get all courses from the coursesMap
+    public List<Course> getCourses() {
+        return new ArrayList<>(coursesMap.values());  // Converting the Map values to a List
+    }
+
+    // Get a specific course by its ID from the coursesMap
+    public Course getCourseById(String courseId) {
+        return coursesMap.get(courseId);
     }
 }

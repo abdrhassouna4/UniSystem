@@ -1,85 +1,59 @@
-import java.io.*;
 import java.util.*;
-import java.util.regex.*;
+
 public class Faculty extends User {
     private String facultyId;
+    private String department;
+    private List<Course> teachingCourses;
 
-    public Faculty(String u, String un, String p, String n, String e, String c, String id) {
-        super(u, un, p, n, e, c);
-        this.facultyId = id;
+
+    public Faculty(String userId, String username, String password, String name, String email, String contactInfo, String facultyId, String department) {
+        super(userId, username, password, name, email, contactInfo);
+        this.facultyId = facultyId;
+        this.department = department;
+        this.teachingCourses = new ArrayList<>();
+    }
+
+    public void addCourse(Course course) {
+        course.setInstructor(this);
+        teachingCourses.add(course);
+    }
+
+    public void assignGrade(Course course, Student student, String grade) {
+        if (teachingCourses.contains(course)) {
+            course.assignGrade(student, grade);
+            System.out.println("Grade assigned.");
+        } else {
+            System.out.println("You are not assigned to this course.");
+        }
+    }
+
+    public void viewCourseRoster(Course course) {
+        if (teachingCourses.contains(course)) {
+            course.printRoster();
+        } else {
+            System.out.println("You are not the instructor for this course.");
+        }
     }
 
     @Override
-    public void displayMenu() {
-        Scanner scanner = new Scanner(System.in);
-        boolean continueMenu = true;
+    public boolean login(String username, String password) {
+        return this.username.equals(username) && this.password.equals(password);
+    }
 
-        while (continueMenu) {
-            System.out.println("\n========== Faculty Menu ==========");
-            System.out.println("1. View My Courses");
-            System.out.println("2. Manage Enrolled Students");
-            System.out.println("3. Enter or Update Student Grades");
-            System.out.println("4. Update Profile");
-            System.out.println("5. Logout");
+    @Override
+    public void logout() {
+        System.out.println("Faculty logged out.");
+    }
 
-            System.out.print("Enter your choice (1-5): ");
-            
-            try {
-                int choice = scanner.nextInt();
-                scanner.nextLine(); // consume newline
+    @Override
+    public void updateProfile(String name, String email, String contactInfo) {
+        this.name = name;
+        this.email = email;
+        this.contactInfo = contactInfo;
+        System.out.println("Profile updated.");
+    }
 
-                switch (choice) {
-                    case 1:
-                        System.out.println("\nYour Assigned Courses:");
-                        System.out.println("- CS101: Introduction to Programming");
-                        System.out.println("- CS201: Data Structures");
-                        break;
-                    case 2:
-                        System.out.print("\nEnter course code to view enrolled students: ");
-                        String courseCode = scanner.nextLine();
-                        System.out.println("Students enrolled in " + courseCode + ":");
-                        System.out.println("- Student A (ID: S001)");
-                        System.out.println("- Student B (ID: S002)");
-                        break;
-                    case 3:
-                        System.out.println("\nUpdate Student Grade:");
-                        System.out.print("Enter student ID: ");
-                        String studentId = scanner.nextLine();
-                        System.out.print("Enter course code: ");
-                        String course = scanner.nextLine();
-                        System.out.print("Enter grade: ");
-                        String grade = scanner.nextLine();
-                        System.out.println("Grade updated: " + grade + " for student " + studentId + " in " + course);
-                        break;
-                    case 4:
-                        System.out.println("\nUpdate Profile:");
-                        System.out.print("Enter new name: ");
-                        String name = scanner.nextLine();
-                        System.out.print("Enter new email: ");
-                        String email = scanner.nextLine();
-                        System.out.print("Enter new contact info: ");
-                        String contact = scanner.nextLine();
-                        updateProfile(name, email, contact);
-                        break;
-                    case 5:
-                        continueMenu = false;
-                        System.out.println("Logging out...");
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please enter 1-5.");
-                }
-            } catch (InputMismatchException e) {
-                System.out.println("Please enter a number between 1-5.");
-                scanner.nextLine(); // clear invalid input
-            }
-
-            if (continueMenu) {
-                System.out.print("\nReturn to menu? (yes/no): ");
-                String cont = scanner.nextLine();
-                if (!cont.equalsIgnoreCase("yes")) {
-                    continueMenu = false;
-                }
-            }
-        }
+    public List<Course> getTeachingCourses() {
+        return teachingCourses;
     }
 }

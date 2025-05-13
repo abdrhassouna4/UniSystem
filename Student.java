@@ -1,161 +1,95 @@
-import java.io.*;
 import java.util.*;
-import java.util.regex.*;
-// Student class
+
 class Student extends User {
     private String studentId;
     private String admissionDate;
     private String academicStatus;
-    private Enrollment[] enrolledCourses; 
-    private int enrolledCourseCount;
+    private List<Course> enrolledCourses;
+    private Map<Course, String> grades;
 
-    public Student(String userId, String username, String password, String name, String email, String contactInfo,
-                   String studentId, String admissionDate, String academicStatus) {
+    public Student(String userId, String username, String password, String name, String email, String contactInfo, String studentId, String admissionDate, String academicStatus) {
         super(userId, username, password, name, email, contactInfo);
         this.studentId = studentId;
         this.admissionDate = admissionDate;
         this.academicStatus = academicStatus;
-        this.enrolledCourses = new Enrollment[8]; 
-        this.enrolledCourseCount = 0;
+        this.enrolledCourses = new ArrayList<>();
+        this.grades = new HashMap<>();
     }
 
-    public void registerForCourse(Course course) {
-        if (enrolledCourseCount >= 8) {
-            System.out.println("Maximum courses reached.");
-            return;
-        }
+    public String getStudentId() { return studentId; }
 
-        if (course.getAvailableSeats() > 0) {
-            if (course.isPrerequisiteSatisfied(this)) {
-                Enrollment enrollment = new Enrollment(this, course);
-                enrolledCourses[enrolledCourseCount++] = enrollment;
-                course.addStudent(this);
-                System.out.println("Course registered successfully.");
-            } else {
-                System.out.println("Prerequisites not satisfied.");
+    public void receiveGrade(Course course, String grade) {
+        grades.put(course, grade);
+    }
+
+    public String getGrade(String courseId) {
+        for (Map.Entry<Course, String> entry : grades.entrySet()) {
+            if (entry.getKey().getCourseId().equals(courseId)) {
+                return entry.getValue();
             }
-        } else {
-            System.out.println("No available seats.");
         }
-    }
-
-    public String getStudentId() {
-        return studentId;
+        return "N/A";
     }
 
     public void dropCourse(Course course) {
-        boolean found = false;
-        for (int i = 0; i < enrolledCourseCount; i++) {
-            if (enrolledCourses[i].getCourse().equals(course)) {
-                // Shift remaining elements
-                for (int j = i; j < enrolledCourseCount - 1; j++) {
-                    enrolledCourses[j] = enrolledCourses[j + 1];
-                }
-                enrolledCourses[--enrolledCourseCount] = null;
-                course.removeStudent(this.getStudentId());
-                System.out.println("Course dropped successfully.");
-                found = true;
-                break;
-            }
-        }
-        if (!found) {
-            System.out.println("You are not enrolled in this course.");
+        if (enrolledCourses.remove(course)) {
+            course.dropStudent(this);
+            System.out.println("Course dropped successfully.");
+        } else {
+            System.out.println("Failed to drop course.");
         }
     }
 
     public void viewGrades() {
-        System.out.println("\n=== Your Grades ===");
-        for (int i = 0; i < enrolledCourseCount; i++) {
-            Enrollment e = enrolledCourses[i];
-            System.out.println("Course: " + e.getCourse().getTitle()
-                    + ", Grade: " + (e.getGrade() != null ? e.getGrade() : "Not graded yet"));
+        for (Map.Entry<Course, String> entry : grades.entrySet()) {
+            System.out.println("Course: " +  ", Grade: " + entry.getValue());
         }
     }
+    public void printAvailableCourses(University university) {
+        university.printAllCourses();  // Call the university's method to print all courses
+    }
 
-    public double calculateGPA() {
+    public void calculateGPA() {
         double totalPoints = 0;
         int totalCredits = 0;
-        for (int i = 0; i < enrolledCourseCount; i++) {
-            Enrollment e = enrolledCourses[i];
-            if (e.getGrade() != null) {
-                totalPoints += e.getGradePoint() * e.getCourse().getCreditHours();
-                totalCredits += e.getCourse().getCreditHours();
-            }
+        for (Map.Entry<Course, String> entry : grades.entrySet()) {
+            totalPoints += entry.getKey().getCreditHours() * getGradePoints(entry.getValue());
+            totalCredits += entry.getKey().getCreditHours();
         }
-        return totalCredits > 0 ? totalPoints / totalCredits : 0.0;
+        if (totalCredits == 0) {
+            System.out.println("No graded courses to calculate GPA.");
+            return;
+        }
+        double gpa = totalPoints / totalCredits;
+        System.out.println("GPA: " + gpa);
     }
 
-    public Enrollment[] getEnrolledCourses() {
-        return enrolledCourses;
-    }
-
-    public int getCourseCount() {
-        return enrolledCourseCount;
+    private double getGradePoints(String grade) {
+        return switch (grade) {
+            case "A" -> 4.0;
+            case "B" -> 3.0;
+            case "C" -> 2.0;
+            case "D" -> 1.0;
+            case "F" -> 0.0;
+            default -> 0.0;
+        };
     }
 
     @Override
-    public void displayMenu() {
-        Scanner scanner = new Scanner(System.in);
-        boolean continueMenu = true;
+    public boolean login(String username, String password) {
+        return this.username.equals(username) && this.password.equals(password);
+    }
 
-        while (continueMenu) {
-            System.out.println("\n========== Student Menu ==========");
-            System.out.println("1. Register for Course");
-            System.out.println("2. Drop Course");
-            System.out.println("3. View Grades");
-            System.out.println("4. View GPA");
-            System.out.println("5. Update Profile");
-            System.out.println("6. Logout");
-            System.out.print("Enter your choice (1-6): ");
-            
-            try {
-                int choice = scanner.nextInt();
-                scanner.nextLine(); // consume newline
+    @Override
+    public void logout() {
+        System.out.println("Logged out successfully.");
+    }
 
-                switch (choice) {
-                    case 1:
-                        System.out.println("\nRegistering for a course...");
-                        // Implementation would go here
-                        break;
-                    case 2:
-                        System.out.println("\nDropping a course...");
-                        // Implementation would go here
-                        break;
-                    case 3:
-                        viewGrades();
-                        break;
-                    case 4:
-                        System.out.printf("\nYour GPA: %.2f\n", calculateGPA());
-                        break;
-                    case 5:
-                        System.out.println("\nUpdate Profile:");
-                        System.out.print("Enter new name: ");
-                        String name = scanner.nextLine();
-                        System.out.print("Enter new email: ");
-                        String email = scanner.nextLine();
-                        System.out.print("Enter new contact info: ");
-                        String contact = scanner.nextLine();
-                        updateProfile(name, email, contact);
-                        break;
-                    case 6:
-                        continueMenu = false;
-                        System.out.println("Logging out...");
-                        break;
-                    default:
-                        System.out.println("Invalid choice. Please enter 1-6.");
-                }
-            } catch (InputMismatchException e) {
-                System.out.println("Please enter a number between 1-6.");
-                scanner.nextLine(); // clear invalid input
-            }
-
-            if (continueMenu) {
-                System.out.print("\nReturn to menu? (yes/no): ");
-                String cont = scanner.nextLine();
-                if (!cont.equalsIgnoreCase("yes")) {
-                    continueMenu = false;
-                }
-            }
-        }
+    @Override
+    public void updateProfile(String name, String email, String contactInfo) {
+        this.name = name;
+        this.email = email;
+        this.contactInfo = contactInfo;
+        System.out.println("Profile updated successfully.");
     }
 }
